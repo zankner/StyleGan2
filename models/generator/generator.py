@@ -30,5 +30,16 @@ class Generator(Model):
     # Call layers of network on input x
     # Use the training variable to handle adding layers such as Dropout
     # and Batch Norm only during training
+    x = self.map_net_1(x)
+    x = self.map_net_2(x)
+    x = self.map_net_3(x)
+    x = self.map_net_4(x)
+    x = self.map_net_5(x)
+    x = self.map_net_6(x)
+    x = self.map_net_7(x)
+    x = self.map_net_8(x)
+
+    for synth_block in self.synthesis_network:
+      x = synth_block(x)
 
     return x
