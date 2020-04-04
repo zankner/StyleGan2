@@ -16,26 +16,33 @@ class SynthesisBlock(Layer):
     # Define layers of the network:
     self.upsample = UpSampling2D()
 
-    self.y_0 = Dense(channels * 2)
-    self.y_1 = Dense(channels * 2)
-    self.y_2 = Dense(channels * 2)
-    self.y_3 = Dense(channels * 2)
-    
-    self.conv_0 = Conv2D(channels, kernel_size)
-    self.conv_1 = Conv2D(channels, kernel_size)
-    self.conv_2 = Conv2D(channels, kernel_size)
-    self.conv_3 = Conv2D(channels, kernel_size)
+    self.y_0 = Dense(channels)
+    self.y_1 = Dense(channels)
+    self.y_2 = Dense(channels)
+    self.y_3 = Dense(channels)
 
     self.xavier = GlorotUniform()
-    noise_scale_shape = (None, img_dim, img_dim, 1)
-    self.noise_scale_0 = tf.Variable(
-        initializer = xavier(shape=noise_scale_shape))
-    self.noise_scale_1 = tf.Variable(
-        initializer = xavier(shape=noise_scale_shape))
-    self.noise_scale_2 = tf.Variable(
-        initializer = xavier(shape=noise_scale_shape))
-    self.noise_scale_3 = tf.Variable(
-        initializer = xavier(shape=noise_scale_shape))
+
+    conv_shape = (3, 3, channels, channels)
+    self.conv_0 = tf.Variable(initializer = self.xavier(
+      shape=conv_shape))
+    self.conv_1 = tf.Variable(initializer = self.xavier(
+      shape=conv_shape))
+    self.conv_2 = tf.Variable(initializer = self.xavier(
+      shape=conv_shape))
+    self.conv_3 = tf.Variable(initializer = self.xavier(
+      shape=conv_shape))
+
+  def build(self, input_shape):
+    noise_scale_shape = (input_shape[0], img_dim, img_dim, 1)
+    self.noise_scale_0 = self.add_weight(shape=noise_scale_shape,
+        initializer='glorot_uniform')
+    self.noise_scale_1 = self.add_weight(shape=noise_scale_shape,
+        initializer='glorot_uniform')
+    self.noise_scale_2 = self.add_weight(shape=noise_scale_shape,
+        initializer='glorot_uniform')
+    self.noise_scale_3 = self.add_weight(shape=noise_scale_shape,
+        initializer='glorot_uniform')
 
 
   def call(self, x, initial=False, training=False):
@@ -43,36 +50,26 @@ class SynthesisBlock(Layer):
     # Use the training variable to handle adding layers such as Dropout
     # and Batch Norm only during training
     if !initial:
-      x = self.conv_0(x)
+      x = self.upsample_0(x)
 
-    x = x + (self.noise_scale_0 * noise)
-    
-    y = self.y_0(w)
-    y_scale, y_bias = tf.split(y, [self.channels], axis=1)
-    # Add instance normalization
+    s = self.y_0(w)
+    w_prime = self.conv_0 * s
+    std = tf.math.reduce_mean(w_prime, self.channels)
+    w_prime = w_prime / std
 
-    x = self.self.conv_1(x)
-
-    x = x + (self.noise_scale_1 * noise)
-
-    y = self.y_1(w)
-    y_scale, y_bias = tf.split(y, [self.channels], axis=1)
-    # Add instance normalization
-
-    x = self.conv_2(x)
+    x = tf.nn.conv2d(x, w_pime)
 
     x = x + (self.noise_scale_2 * noise)
     
-    y = self.y_2(w)
-    y_scale, y_bias = tf.split(y, [self.channels], axis=1)
-    # Add instance normalization
+    x = self.upsample_1(x)
 
-    x = self.self.conv_3(x)
+    s = self.y_0(w)
+    w_prime = self.conv_0 * s
+    std = tf.math.reduce_mean(w_prime, self.channels)
+    w_prime = w_prime / std
 
-    x = x + (self.noise_scale_0 * noise)
+    x = tf.nn.conv2d(x, w_pime)
 
-    y = self.y_3(w)
-    y_scale, y_bias = tf.split(y, [self.channels], axis=1)
-    # Add instance normalization
+    x = x + (self.noise_scale_2 * noise)
 
     return x
