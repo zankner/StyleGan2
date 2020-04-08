@@ -17,30 +17,21 @@ class SynthesisBlock(Layer):
 
         # Define layers of the network:
         self.upsample_0 = UpSampling2D()
-        self.upsample_1 = UpSampling2D()
 
         self.y_0 = Dense(channels)
         self.y_1 = Dense(channels)
-        self.y_2 = Dense(channels)
-        self.y_3 = Dense(channels)
 
         self.xavier = GlorotUniform()
 
         conv_shape = (3, 3, channels, channels)
         self.conv_0 = tf.Variable(initializer=self.xavier(shape=conv_shape))
         self.conv_1 = tf.Variable(initializer=self.xavier(shape=conv_shape))
-        self.conv_2 = tf.Variable(initializer=self.xavier(shape=conv_shape))
-        self.conv_3 = tf.Variable(initializer=self.xavier(shape=conv_shape))
 
     def build(self, input_shape):
         noise_scale_shape = (input_shape[0], self.img_dim, self.img_dim, 1)
         self.noise_scale_0 = self.add_weight(shape=noise_scale_shape,
                                              initializer='glorot_uniform')
         self.noise_scale_1 = self.add_weight(shape=noise_scale_shape,
-                                             initializer='glorot_uniform')
-        self.noise_scale_2 = self.add_weight(shape=noise_scale_shape,
-                                             initializer='glorot_uniform')
-        self.noise_scale_3 = self.add_weight(shape=noise_scale_shape,
                                              initializer='glorot_uniform')
 
     def call(self, x, w, noise, initial=False, training=False):
