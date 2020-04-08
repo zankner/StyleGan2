@@ -9,26 +9,27 @@ from tensorflow.keras.initializers import GlorotUniform
 
 # Defining network Below:
 class SynthesisBlock(Layer):
-    def __init__(self, channels, img_dim, kernel_size=3):
+    def __init__(self, img_dim, in_channels, out_channels, kernel_size=3):
         super(SynthesisBlock, self).__init__()
 
-        self.channels = channels
         self.img_dim = img_dim
+        self.out_channels = out_channels
 
         # Define layers of the network:
-        self.upsample_0 = UpSampling2D()
+        self.upsample_0 = UpSampling2D(interpolation='bilinear')
 
         self.y_0 = Dense(channels)
         self.y_1 = Dense(channels)
 
         self.xavier = GlorotUniform()
 
-        conv_shape = (3, 3, channels, channels)
+        conv_shape = (kernel_size, kernel_size, in_channels, out_channels)
         self.conv_0 = tf.Variable(initializer=self.xavier(shape=conv_shape))
         self.conv_1 = tf.Variable(initializer=self.xavier(shape=conv_shape))
 
     def build(self, input_shape):
-        noise_scale_shape = (input_shape[0], self.img_dim, self.img_dim, 1)
+        noise_scale_shape = (input_shape[0], self.img_dim, self.img_dim,
+                             self.out_channels)
         self.noise_scale_0 = self.add_weight(shape=noise_scale_shape,
                                              initializer='glorot_uniform')
         self.noise_scale_1 = self.add_weight(shape=noise_scale_shape,
