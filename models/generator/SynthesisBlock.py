@@ -18,8 +18,8 @@ class SynthesisBlock(Layer):
         # Define layers of the network:
         self.upsample_0 = UpSampling2D(interpolation='bilinear')
 
-        self.y_0 = Dense(channels)
-        self.y_1 = Dense(channels)
+        self.y_0 = Dense(out_channels)
+        self.y_1 = Dense(out_channels)
 
         self.xavier = GlorotUniform()
 
