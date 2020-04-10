@@ -8,19 +8,28 @@ from models.generator import SynthesisBlock
 
 # Defining network Below:
 class Discriminator(Model):
-    def __init__(self, fmap_base, fmap_decay, fmap_min, fmap_max, kernel_size):
+    def __init__(self, fmap_base=16 << 10, fmap_decay=1.0,
+                 fmap_min=1, fmap_max=512, kernel_size=3):
         super(Discriminator, self).__init__()
         # Define layers of the network:
-        feat_maps = [np.clip(int(fmap_base / (2.0 ** (stage * fmap_decay))),
-                             fmap_min, fmap_max) for stage in range(9)].reverse()
+        self.dense_0 = Dense(2, activation='softmax')
+
+        feat_maps = []
+        for stage in range(9):
+            feat_maps.append(
+                np.clip(int(fmap_base / (2.0 ** (stage * fmap_decay))),
+                        fmap_min, fmap_max))
 
         self.discriminator_network = []
         for i in range(9):
-            self.discriminator_network.append([
-                Conv2D(feat_maps[i], kernel_size, padding='same'), AveragePooling2D()])
+            discriminator_block = []
+            discriminator_block.append(
+                Conv2D(feat_maps[i], kernel_size, padding='same'))
+            discriminator_block.append(AveragePooling2D())
+            self.discriminator_network.append(discriminator_block)
 
         self.from_rgb = []
-        for rbg_dim in range(9):
+        for i in range(9):
             self.from_rgb.append([
                 Conv2D(feat_maps[i], kernel_size, padding='same'), AveragePooling2D()])
 
@@ -31,11 +40,21 @@ class Discriminator(Model):
         res_block = None
 
         for i in range(progressive_depth):
-            if i == 0:
+            if i == 0 and progressive_depth > 0:
                 res_scaled = self.from_rgb[progressive_depth - 1][1](x)
                 res_block = self.from_rgb[progressive_depth -
                                           1][0](res_scaled)
-                x = self.from_rgb[progressive_depth][1](x)
             x = self.discriminator_network[progressive_depth - i][0](x)
             x = self.discriminator_network[progressive_depth - i][1](x)
-            x = ((1 - alpha) * x) + ((1 - alpha) * res_block)
+            if i == 0 and progressive_depth > 0:
+                x = ((1 - alpha) * x) + ((1 - alpha) * res_block)
+        x = self.dense_0(x)
+
+        return x
+
+
+l = Discriminator()
+x = tf.random.uniform([1, 1024, 1024, 3])
+g = l(x, 3, .5)
+print(g)
+# print(g.shape)
