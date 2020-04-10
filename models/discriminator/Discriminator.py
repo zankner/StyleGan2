@@ -19,6 +19,7 @@ class Discriminator(Model):
             feat_maps.append(
                 np.clip(int(fmap_base / (2.0 ** (stage * fmap_decay))),
                         fmap_min, fmap_max))
+        feat_maps.reverse()
 
         self.discriminator_network = []
         for i in range(9):
@@ -40,21 +41,16 @@ class Discriminator(Model):
         res_block = None
 
         for i in range(progressive_depth):
-            if i == 0 and progressive_depth > 0:
+            if i == 0 and progressive_depth > 1:
                 res_scaled = self.from_rgb[progressive_depth - 1][1](x)
                 res_block = self.from_rgb[progressive_depth -
                                           1][0](res_scaled)
-            x = self.discriminator_network[progressive_depth - i][0](x)
-            x = self.discriminator_network[progressive_depth - i][1](x)
-            if i == 0 and progressive_depth > 0:
+            x = self.discriminator_network[progressive_depth - (i + 1)][0](x)
+            if i < progressive_depth - 1:
+                x = self.discriminator_network[progressive_depth -
+                                               (i + 1)][1](x)
+            if i == 0 and progressive_depth > 1:
                 x = ((1 - alpha) * x) + ((1 - alpha) * res_block)
         x = self.dense_0(x)
 
         return x
-
-
-l = Discriminator()
-x = tf.random.uniform([1, 1024, 1024, 3])
-g = l(x, 3, .5)
-print(g)
-# print(g.shape)
