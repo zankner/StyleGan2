@@ -9,10 +9,12 @@ from tensorflow.keras.initializers import GlorotUniform
 
 # Defining network Below:
 class SynthesisBlock(Layer):
-    def __init__(self, img_dim, in_channels, out_channels, kernel_size=3):
+    def __init__(self, img_dim, in_channels, out_channels, initial=False, 
+            kernel_size=3):
         super(SynthesisBlock, self).__init__()
 
-        self.img_dim = img_dim
+        self.img_dim = img_dim if initial else img_dim * 2
+
         self.out_channels = out_channels
 
         # Define layers of the network:
@@ -67,6 +69,7 @@ class SynthesisBlock(Layer):
                 weight.shape[3], weight.shape[4]])
             mod_conv_x.append(tf.nn.conv2d(input_, weight, 1, 'SAME'))
             
+        x = tf.concat(mod_conv_x, 0)
 
         x = x + (self.noise_scale_0 * noise)
 
@@ -107,5 +110,5 @@ s = SynthesisBlock(4, 512, 512)
 w = tf.random.uniform([3, 512])
 x = tf.random.uniform([3, 4, 4, 512])
 noise = tf.random.uniform([1, 1, 1, 512])
-g = s(x, w, noise, initial=True)
+g = s(x, w, noise)
 print(g.shape)
