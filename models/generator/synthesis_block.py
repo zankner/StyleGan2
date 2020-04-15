@@ -13,7 +13,7 @@ class SynthesisBlock(Layer):
             kernel_size=3):
         super(SynthesisBlock, self).__init__()
 
-        self.img_dim = img_dim if initial else img_dim * 2
+        self.img_dim = img_dim
 
         self.out_channels = out_channels
 
@@ -23,11 +23,12 @@ class SynthesisBlock(Layer):
         self.y_0 = Dense(out_channels)
         self.y_1 = Dense(out_channels)
 
-        conv_shape = (kernel_size, kernel_size, in_channels, out_channels)
+        conv_0_shape = (kernel_size, kernel_size, in_channels, out_channels)
         self.conv_0 = self.add_weight(
-            shape=conv_shape, initializer='glorot_uniform')
+            shape=conv_0_shape, initializer='glorot_uniform')
+        conv_1_shape = (kernel_size, kernel_size, out_channels, out_channels)
         self.conv_1 = self.add_weight(
-            shape=conv_shape, initializer='glorot_uniform')
+            shape=conv_1_shape, initializer='glorot_uniform')
 
     def build(self, input_shape):
         noise_scale_shape = (input_shape[0], self.img_dim, self.img_dim,
@@ -96,7 +97,6 @@ class SynthesisBlock(Layer):
                     weight.shape[3], weight.shape[4]])
                 mod_conv_x.append(tf.nn.conv2d(input_, weight, 1, 'SAME'))
                 
-
             x = x + (self.noise_scale_1 * noise)
 
             x += self.bias_1
@@ -104,11 +104,3 @@ class SynthesisBlock(Layer):
             x = tf.nn.leaky_relu(x)
 
         return x
-
-
-s = SynthesisBlock(4, 512, 512)
-w = tf.random.uniform([3, 512])
-x = tf.random.uniform([3, 4, 4, 512])
-noise = tf.random.uniform([1, 1, 1, 512])
-g = s(x, w, noise)
-print(g.shape)

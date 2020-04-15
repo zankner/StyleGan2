@@ -3,7 +3,6 @@ import tensorflow as tf
 # Import layers:
 from tensorflow.keras.layers import (Dense, Flatten, Conv2D, AveragePooling2D)
 from tensorflow.keras import Model
-from models.generator import SynthesisBlock
 
 
 # Defining network Below:
